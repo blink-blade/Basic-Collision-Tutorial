@@ -7,11 +7,12 @@ from kivy.graphics import RenderContext, Rectangle, Color
 from kivy.uix.effectwidget import AdvancedEffectBase, EffectWidget
 from kivy.uix.image import Image
 
-from helpers import get_distance_between_points
+from helpers import get_distance_between_points, controls, on_key_up, on_key_down
 
 Window.size = (1920, 1080)
 
 rects = []
+
 
 # Just using an image because I am lazy.
 class Rect(Image):
@@ -22,12 +23,10 @@ class Rect(Image):
         self.background_color = [1, 1, 1, 1]
         self.size_hint = None, None
 
-
     def remove_extra_instructions(self):
         for instruction in self.instructions:
             self.canvas.remove(instruction)
         self.instructions.clear()
-
 
     def add_instructions(self):
         for rect in rects:
@@ -42,6 +41,38 @@ class Rect(Image):
                 brightener_instruction.size = intersection[2], intersection[3]
                 self.canvas.add(color)
                 self.canvas.add(brightener_instruction)
+
+    def solve_with_rect(self, rect):
+        intersection_with_rect = get_intersection_of_rects(rect, self)
+        # We solve the axis with the least overlap.
+        if intersection_with_rect[2] < intersection_with_rect[3]:
+            if self.x > rect.x:
+                rect.x -= intersection_with_rect[2]
+            else:
+                rect.x += intersection_with_rect[2]
+        else:
+            if self.y > rect.y:
+                rect.y -= intersection_with_rect[3]
+            else:
+                rect.y += intersection_with_rect[3]
+
+    def solve_collisions(self, num_iters):
+        # First, get the rect which is intersecting the most.
+        largest_intersection = 0
+        rect_to_solve = None
+        for rect in rects:
+            if rect == self:
+                continue
+            intersection_with_rect = get_intersection_of_rects(rect, self)
+            area = intersection_with_rect[2] * intersection_with_rect[3]
+            if area > largest_intersection:
+                largest_intersection = area
+                rect_to_solve = rect
+        # If there wasn't any intersections, then don't do anything.
+        if not largest_intersection:
+            return
+        # Then we solve collisions with that rect.
+        self.solve_with_rect(rect_to_solve)
 
 
     def update(self, dt):
@@ -65,10 +96,10 @@ def get_intersection_of_rects(rect_one, rect_two):
     return [0, 0, 0, 0]
 
     # For more practical use in gamedev or something else, you could use this which just gets the area:
-        # intersection = [0, 0]
-        # intersection[0] = min(rect_one.right, rect_two.right) - max(rect_one.x, rect_two.x)
-        # intersection[1] = min(rect_one.top, rect_two.top) - max(rect_one.y, rect_two.y)
-        # return intersection
+    # intersection = [0, 0]
+    # intersection[0] = min(rect_one.right, rect_two.right) - max(rect_one.x, rect_two.x)
+    # intersection[1] = min(rect_one.top, rect_two.top) - max(rect_one.y, rect_two.y)
+    # return intersection
 
 
 class GameApp(App):
@@ -77,10 +108,7 @@ class GameApp(App):
         self.previous_touch_position = None
         super(GameApp, self).__init__(**kwargs)
         # Window.bind(on_motion=on_motion, on_resize=self.on_resize)
-        # Window.bind(on_joy_axis=on_joy_axis, on_joy_hat=on_joy_hat, on_joy_ball=on_joy_ball,
-        #             on_joy_button_up=on_joy_button_up, on_joy_button_down=on_joy_button_down, on_key_up=on_key_up,
-        #             on_key_down=on_key_down, on_touch_down=on_touch_down, on_touch_up=on_touch_up)
-
+        Window.bind(on_key_up=on_key_up, on_key_down=on_key_down)
 
     def on_touch_down(self, touch):
         shortest_distance = 10000
@@ -92,7 +120,6 @@ class GameApp(App):
         self.selected_rect = closest_rect
         self.previous_touch_position = touch.pos
 
-
     def on_touch_move(self, touch):
         if not self.selected_rect:
             return
@@ -102,23 +129,26 @@ class GameApp(App):
         # This makes things look cleaner when moving the rectangles arouned
         self.update(0)
 
-
     def on_touch_up(self, touch):
         self.selected_rect = None
-
 
     def on_start(self):
         self.root.on_touch_down = self.on_touch_down
         self.root.on_touch_move = self.on_touch_move
         self.root.on_touch_up = self.on_touch_up
         Clock.schedule_interval(self.update, 1 / 60)
-        self.rect1 = Rect(pos=(500, 500), size=(200, 200), color=(0, 1, 0, 1))
-        self.root.add_widget(self.rect1)
+        self.player_rect = Rect(pos=(500, 500), size=(200, 200), color=(0, 1, 0, 1))
+        self.root.add_widget(self.player_rect)
         self.rect2 = Rect(pos=(550, 550), size=(200, 200), color=(1, 0, 0, 1))
+        self.root.add_widget(self.rect2)
+        self.rect2 = Rect(pos=(250, 550), size=(100, 200), color=(1, 0, 0, 1))
         self.root.add_widget(self.rect2)
 
 
     def update(self, dt):
+        if controls.get('space'):
+            self.player_rect.solve_collisions(num_iters=1)
+            controls.pop('space')
         for rect in rects:
             rect.update(dt)
 
