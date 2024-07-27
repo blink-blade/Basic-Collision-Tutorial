@@ -47,21 +47,15 @@ class Rect(Image):
 
         # We solve the axis with the least overlap.
         if intersection_size[0] < intersection_size[1]:
-            half_intersection = intersection_size[0] / 2
             if self.x > rect.x:
-                self.x += half_intersection
-                rect.x -= half_intersection
+                rect.x -= intersection_size[0]
             else:
-                self.x -= half_intersection
-                rect.x += half_intersection
+                rect.x += intersection_size[0]
         else:
-            half_intersection = intersection_size[1] / 2
             if self.y > rect.y:
-                self.y += half_intersection
-                rect.y -= half_intersection
+                rect.y -= intersection_size[1]
             else:
-                self.y -= half_intersection
-                rect.y += half_intersection
+                rect.y += intersection_size[1]
 
     def solve_collisions(self):
         # First, get the rect which is intersecting the most.
