@@ -18,9 +18,9 @@ rects = []
 class Rect(Image):
     def __init__(self, *args, **kwargs):
         rects.append(self)
+        self.mass = 50
         super().__init__(*args, **kwargs)
         self.instructions = []
-        self.background_color = [1, 1, 1, 1]
         self.size_hint = None, None
 
     def remove_extra_instructions(self):
@@ -43,28 +43,35 @@ class Rect(Image):
                 self.canvas.add(brightener_instruction)
 
     def solve_with_rect(self, rect):
-        intersection_with_rect = get_intersection_of_rects(rect, self)
-        # We solve the axis with the least overlap.
-        if intersection_with_rect[2] < intersection_with_rect[3]:
-            if self.x > rect.x:
-                rect.x -= intersection_with_rect[2]
-            else:
-                rect.x += intersection_with_rect[2]
-        else:
-            if self.y > rect.y:
-                rect.y -= intersection_with_rect[3]
-            else:
-                rect.y += intersection_with_rect[3]
+        intersection_size = get_intersection_of_rects(rect, self)[2:]
 
-    def solve_collisions(self, num_iters):
+        # We solve the axis with the least overlap.
+        if intersection_size[0] < intersection_size[1]:
+            half_intersection = intersection_size[0] / 2
+            if self.x > rect.x:
+                self.x += half_intersection
+                rect.x -= half_intersection
+            else:
+                self.x -= half_intersection
+                rect.x += half_intersection
+        else:
+            half_intersection = intersection_size[1] / 2
+            if self.y > rect.y:
+                self.y += half_intersection
+                rect.y -= half_intersection
+            else:
+                self.y -= half_intersection
+                rect.y += half_intersection
+
+    def solve_collisions(self):
         # First, get the rect which is intersecting the most.
         largest_intersection = 0
         rect_to_solve = None
         for rect in rects:
             if rect == self:
                 continue
-            intersection_with_rect = get_intersection_of_rects(rect, self)
-            area = intersection_with_rect[2] * intersection_with_rect[3]
+            intersection_size = get_intersection_of_rects(rect, self)[2:]
+            area = intersection_size[0] * intersection_size[1]
             if area > largest_intersection:
                 largest_intersection = area
                 rect_to_solve = rect
@@ -73,7 +80,6 @@ class Rect(Image):
             return
         # Then we solve collisions with that rect.
         self.solve_with_rect(rect_to_solve)
-
 
     def update(self, dt):
         self.remove_extra_instructions()
@@ -137,17 +143,16 @@ class GameApp(App):
         self.root.on_touch_move = self.on_touch_move
         self.root.on_touch_up = self.on_touch_up
         Clock.schedule_interval(self.update, 1 / 60)
-        self.player_rect = Rect(pos=(500, 500), size=(200, 200), color=(0, 1, 0, 1))
+        self.player_rect = Rect(pos=(500, 500), size=(200, 200), color=(1, 1, 0, 1))
         self.root.add_widget(self.player_rect)
         self.rect2 = Rect(pos=(550, 550), size=(200, 200), color=(1, 0, 0, 1))
         self.root.add_widget(self.rect2)
         self.rect2 = Rect(pos=(250, 550), size=(100, 200), color=(1, 0, 0, 1))
         self.root.add_widget(self.rect2)
 
-
     def update(self, dt):
         if controls.get('space'):
-            self.player_rect.solve_collisions(num_iters=1)
+            self.player_rect.solve_collisions()
             controls.pop('space')
         for rect in rects:
             rect.update(dt)

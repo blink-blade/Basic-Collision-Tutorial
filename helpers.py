@@ -33,4 +33,3 @@ def on_key_down(_window, keycode, *_rest):
 
 controls = {k: False for k in
             ['w', 's', 'a', 'tab', 'd', 'space', 'dash', 'y', 'b', 'menu', 'start', 'map', 'x']}
-
