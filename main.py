@@ -45,22 +45,25 @@ class Rect(Image):
                 self.y += intersection_size[1]
 
     def solve_collisions(self):
-        # First, get the rect which is intersecting the most.
-        largest_intersection = 0
-        rect_to_solve = None
-        for rect in rects:
-            if rect == self:
-                continue
-            intersection_size = get_intersection_of_rects(rect, self)[2:]
-            area = intersection_size[0] * intersection_size[1]
-            if area > largest_intersection:
-                largest_intersection = area
-                rect_to_solve = rect
-        # If there wasn't any intersections, then don't do anything.
-        if not largest_intersection:
-            return
-        # Then we solve collisions with that rect.
-        self.solve_with_rect(rect_to_solve)
+        # We just start it as a negligible amount so the while loop works.
+        largest_intersection = 0.01
+        while largest_intersection > 0:
+            # First, get the rect which is intersecting the most.`
+            largest_intersection = 0
+            rect_to_solve = None
+            for rect in rects:
+                if rect == self:
+                    continue
+                intersection_size = get_intersection_of_rects(rect, self)[2:]
+                area = intersection_size[0] * intersection_size[1]
+                if area > largest_intersection:
+                    largest_intersection = area
+                    rect_to_solve = rect
+            # If there wasn't any intersections, then don't do anything.
+            if not largest_intersection:
+                return
+            # Then we solve collisions with that rect.
+            self.solve_with_rect(rect_to_solve)
 
     def update(self, dt):
         # Apply gravity
@@ -109,10 +112,15 @@ class GameApp(App):
         Clock.schedule_interval(self.update, 1 / 60)
         self.player_rect = Rect(pos=(500, 500), size=(200, 200), color=(1, 1, 0, 1), static=False)
         self.root.add_widget(self.player_rect)
-        self.ground_rect = Rect(pos=(0, 0), size=(1920, 200), color=(1, 0, 0.1, 1), static=True)
-        self.root.add_widget(self.ground_rect)
-        self.wall_rect = Rect(pos=(0, 200), size=(200, 1080), color=(1, 0.5, 0.1, 1), static=True)
-        self.root.add_widget(self.wall_rect)
+        for i in range(30):
+            rect = Rect(pos=(i * (1920/30), 0), size=(1920 / 30, 1920 / 30), color=(i % 2, 0, 1, 1), static=True)
+            self.root.add_widget(rect)
+        for i in range(30):
+            rect = Rect(pos=(0, i * (1920/30)), size=(1920 / 30, 1920 / 30), color=(i % 2, 0, 1, 1), static=True)
+            self.root.add_widget(rect)
+        for i in range(30):
+            rect = Rect(pos=(200 + (1920/30), i * (1920/30) + 300), size=(1920 / 30, 1920 / 30), color=(i % 2, 0, 1, 1), static=True)
+            self.root.add_widget(rect)
 
 
     def update(self, dt):
