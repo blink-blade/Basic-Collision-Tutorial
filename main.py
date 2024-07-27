@@ -12,7 +12,6 @@ from helpers import get_distance_between_points, controls, on_key_up, on_key_dow
 Window.size = (1920, 1080)
 
 rects = []
-gravity = -0.25
 
 # Just using an image because I am lazy.
 class Rect(Image):
@@ -66,12 +65,10 @@ class Rect(Image):
             self.solve_with_rect(rect_to_solve)
 
     def update(self, dt):
-        # Apply gravity
-        self.y_velocity += gravity
-
         # We diminish the velocity so that we don't keep moving. We could change how much the velocity is diminished-
         # based on the surface the rect is on.
-        self.x_velocity *= 0.98
+        self.x_velocity *= 0.9
+        self.y_velocity *= 0.9
 
         # Now move the rect corresponding to its velocity, but we don't move the rect if it is static.
         if not self.static:
@@ -116,6 +113,9 @@ class GameApp(App):
             rect = Rect(pos=(i * (1920/30), 0), size=(1920 / 30, 1920 / 30), color=(i % 2, 0, 1, 1), static=True)
             self.root.add_widget(rect)
         for i in range(30):
+            rect = Rect(pos=(i * (1920/30), 1080 - (1920/30)), size=(1920 / 30, 1920 / 30), color=(i % 2, 0, 1, 1), static=True)
+            self.root.add_widget(rect)
+        for i in range(30):
             rect = Rect(pos=(0, i * (1920/30)), size=(1920 / 30, 1920 / 30), color=(i % 2, 0, 1, 1), static=True)
             self.root.add_widget(rect)
         for i in range(30):
@@ -127,13 +127,15 @@ class GameApp(App):
         for rect in rects:
             rect.update(dt)
 
-        if controls.get('space'):
-            self.player_rect.y_velocity += 10
-            controls.pop('space')
         if controls.get('a'):
             self.player_rect.x_velocity = -5
         if controls.get('d'):
             self.player_rect.x_velocity = 5
+        if controls.get('s'):
+            self.player_rect.y_velocity = -5
+        if controls.get('w'):
+            self.player_rect.y_velocity = 5
+
 
 if __name__ == '__main__':
     GameApp().run()
