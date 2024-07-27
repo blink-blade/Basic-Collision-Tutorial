@@ -200,20 +200,7 @@ extern int pointCollidesWithRect(double pointX, double pointY, double x, double 
 }
 
 
-double* getIntersectionOfRects(double firstX, double firstY, double firstWidth, double firstHeight, double rectX, double rectY, double rectWidth, double rectHeight) {
-    // This function gets the area of intersection between two rects.
-    double *intersection = malloc(sizeof(double) * 2);
-    intersection[0] = min(firstX + firstWidth, rectX + rectWidth) - max(firstX, rectX);
-    intersection[1] = min(firstY + firstHeight, rectY + rectHeight) - max(firstY, rectY);
 
-    // If the intersection is very small then just say there is not an intersection at all. This helps with some issues when the player's corner touches the corner of a block.
-    if (intersection[0] >= 0.01 && intersection[1] >= 0.01) {
-        return intersection;
-    }
-
-    intersection[0] = 0; intersection[1] = 0;
-    return intersection;
-}
 
 
 double* handleCollisionWithStaticRect(double xVelocity, double yVelocity, double firstX, double firstY, double firstWidth, double firstHeight, double rectX, double rectY, double rectWidth, double rectHeight) {
