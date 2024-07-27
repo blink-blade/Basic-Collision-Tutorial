@@ -12,13 +12,14 @@ from helpers import get_distance_between_points, controls, on_key_up, on_key_dow
 Window.size = (1920, 1080)
 
 rects = []
-
+gravity = -0.25
 
 # Just using an image because I am lazy.
 class Rect(Image):
     def __init__(self, *args, **kwargs):
         rects.append(self)
-        self.mass = 50
+        self.x_velocity = 0
+        self.y_velocity = 0
         super().__init__(*args, **kwargs)
         self.instructions = []
         self.size_hint = None, None
@@ -76,6 +77,17 @@ class Rect(Image):
         self.solve_with_rect(rect_to_solve)
 
     def update(self, dt):
+        # Apply gravity
+        self.y_velocity += gravity
+
+        # We diminish the velocity so that we don't keep moving. We could change how much the velocity is diminished-
+        # based on the surface the rect is on.
+        self.x_velocity *= 0.98
+
+        # Now move the rect corresponding to its velocity.
+        self.x += self.x_velocity
+        self.y += self.y_velocity
+
         self.remove_extra_instructions()
         self.add_instructions()
 
@@ -139,10 +151,6 @@ class GameApp(App):
         Clock.schedule_interval(self.update, 1 / 60)
         self.player_rect = Rect(pos=(500, 500), size=(200, 200), color=(1, 1, 0, 1))
         self.root.add_widget(self.player_rect)
-        self.rect2 = Rect(pos=(550, 550), size=(200, 200), color=(1, 0, 0, 1))
-        self.root.add_widget(self.rect2)
-        self.rect2 = Rect(pos=(250, 550), size=(100, 200), color=(1, 0, 0, 1))
-        self.root.add_widget(self.rect2)
 
     def update(self, dt):
         if controls.get('space'):
