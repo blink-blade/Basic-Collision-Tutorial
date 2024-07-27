@@ -16,7 +16,8 @@ gravity = -0.25
 
 # Just using an image because I am lazy.
 class Rect(Image):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, static, *args, **kwargs):
+        self.static = static
         rects.append(self)
         self.x_velocity = 0
         self.y_velocity = 0
@@ -48,15 +49,19 @@ class Rect(Image):
 
         # We solve the axis with the least overlap.
         if intersection_size[0] < intersection_size[1]:
-            if self.x > rect.x:
-                rect.x -= intersection_size[0]
+            # The rect ran into something so it's velocity is set to 0.
+            self.x_velocity = 0
+            if self.x < rect.x:
+                self.x -= intersection_size[0]
             else:
-                rect.x += intersection_size[0]
+                self.x += intersection_size[0]
         else:
-            if self.y > rect.y:
-                rect.y -= intersection_size[1]
+            # The rect ran into something so it's velocity is set to 0.
+            self.y_velocity = 0
+            if self.y < rect.y:
+                self.y -= intersection_size[1]
             else:
-                rect.y += intersection_size[1]
+                self.y += intersection_size[1]
 
     def solve_collisions(self):
         # First, get the rect which is intersecting the most.
@@ -84,10 +89,11 @@ class Rect(Image):
         # based on the surface the rect is on.
         self.x_velocity *= 0.98
 
-        # Now move the rect corresponding to its velocity.
-        self.x += self.x_velocity
-        self.y += self.y_velocity
-
+        # Now move the rect corresponding to its velocity, but we don't move the rect if it is static.
+        if not self.static:
+            self.x += self.x_velocity
+            self.y += self.y_velocity
+        self.solve_collisions()
         self.remove_extra_instructions()
         self.add_instructions()
 
@@ -149,16 +155,18 @@ class GameApp(App):
         self.root.on_touch_move = self.on_touch_move
         self.root.on_touch_up = self.on_touch_up
         Clock.schedule_interval(self.update, 1 / 60)
-        self.player_rect = Rect(pos=(500, 500), size=(200, 200), color=(1, 1, 0, 1))
+        self.player_rect = Rect(pos=(500, 500), size=(200, 200), color=(1, 1, 0, 1), static=False)
         self.root.add_widget(self.player_rect)
+        self.ground_rect = Rect(pos=(0, 0), size=(1920, 200), color=(1, 0, 0.1, 1), static=True)
+        self.root.add_widget(self.ground_rect)
 
     def update(self, dt):
-        if controls.get('space'):
-            self.player_rect.solve_collisions()
-            controls.pop('space')
         for rect in rects:
             rect.update(dt)
 
+        if self.selected_rect:
+            self.selected_rect.x_velocity = 0
+            self.selected_rect.y_velocity = 0
 
 if __name__ == '__main__':
     GameApp().run()
