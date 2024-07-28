@@ -3,7 +3,7 @@ from pathlib import Path
 from kivy.app import App
 from kivy.clock import Clock
 from kivy.core.window import Window
-from kivy.graphics import RenderContext, Rectangle, Color
+from kivy.graphics import RenderContext, Rectangle, Color, Line
 from kivy.uix.effectwidget import AdvancedEffectBase, EffectWidget
 from kivy.uix.image import Image
 
@@ -13,6 +13,7 @@ Window.size = (1920, 1080)
 
 rects = []
 
+
 # Just using an image because I am lazy.
 class Rect(Image):
     def __init__(self, static, *args, **kwargs):
@@ -21,8 +22,35 @@ class Rect(Image):
         self.x_velocity = 0
         self.y_velocity = 0
         super().__init__(*args, **kwargs)
+        if static:
+            with self.canvas:
+                Color(0, 87 / 255, 138 / 255, 1)
+                Line(rectangle=(self.pos[0] + 2, self.pos[1] + 2, self.size[0] - 4, self.size[1] - 4), cap='square',
+                     width=2)
+
+        self.instructions = []
         self.size_hint = None, None
 
+    def remove_extra_instructions(self):
+        # Just some rendering to highlight the overlapping.
+        for instruction in self.instructions:
+            self.canvas.remove(instruction)
+        self.instructions.clear()
+
+    def add_instructions(self):
+        # Just some rendering to highlight the overlapping.
+        for rect in rects:
+            if rect == self:
+                continue
+            intersection = get_intersection_of_rects(rect, self)
+            if intersection[2] * intersection[3] > 0:
+                color = Color(0.5, 1, 1, 1)
+                brightener_instruction = Rectangle()
+                self.instructions.append(brightener_instruction)
+                brightener_instruction.pos = intersection[0], intersection[1]
+                brightener_instruction.size = intersection[2], intersection[3]
+                self.canvas.add(color)
+                self.canvas.add(brightener_instruction)
 
     def solve_with_rect(self, rect):
         intersection_size = get_intersection_of_rects(rect, self)[2:]
@@ -74,7 +102,12 @@ class Rect(Image):
         if not self.static:
             self.x += self.x_velocity
             self.y += self.y_velocity
-            self.solve_collisions()
+            if controls.get('space'):
+                self.solve_collisions()
+            # Just some rendering to highlight the overlapping.
+            self.remove_extra_instructions()
+            self.add_instructions()
+
 
 
 def get_intersection_of_rects(rect_one, rect_two):
@@ -107,21 +140,21 @@ class GameApp(App):
 
     def on_start(self):
         Clock.schedule_interval(self.update, 1 / 60)
-        self.player_rect = Rect(pos=(500, 500), size=(200, 200), color=(1, 1, 0, 1), static=False)
-        self.root.add_widget(self.player_rect)
-        for i in range(30):
-            rect = Rect(pos=(i * (1920/30), 0), size=(1920 / 30, 1920 / 30), color=(i % 2, 0, 1, 1), static=True)
-            self.root.add_widget(rect)
-        for i in range(30):
-            rect = Rect(pos=(i * (1920/30), 1080 - (1920/30)), size=(1920 / 30, 1920 / 30), color=(i % 2, 0, 1, 1), static=True)
-            self.root.add_widget(rect)
-        for i in range(30):
-            rect = Rect(pos=(0, i * (1920/30)), size=(1920 / 30, 1920 / 30), color=(i % 2, 0, 1, 1), static=True)
-            self.root.add_widget(rect)
-        for i in range(30):
-            rect = Rect(pos=(200 + (1920/30), i * (1920/30) + 300), size=(1920 / 30, 1920 / 30), color=(i % 2, 0, 1, 1), static=True)
-            self.root.add_widget(rect)
 
+        for i in range(30):
+            rect = Rect(pos=(i * (64), 0), size=(64, 64), color=(0, 117 / 255, 185 / 255, 1), static=True)
+            self.root.add_widget(rect)
+        for i in range(30):
+            rect = Rect(pos=(i * (64), 64 * 16), size=(64, 64), color=(0, 117 / 255, 185 / 255, 1), static=True)
+            self.root.add_widget(rect)
+        for i in range(30):
+            rect = Rect(pos=(0, i * (64)), size=(64, 64), color=(0, 117 / 255, 185 / 255, 1), static=True)
+            self.root.add_widget(rect)
+        for i in range(30):
+            rect = Rect(pos=(256, i * (64) + 192), size=(64, 64), color=(0, 117 / 255, 185 / 255, 1), static=True)
+            self.root.add_widget(rect)
+        self.player_rect = Rect(pos=(500, 500), size=(128, 128), color=(1, 1, 0, 1), static=False)
+        self.root.add_widget(self.player_rect)
 
     def update(self, dt):
         for rect in rects:
