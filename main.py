@@ -12,7 +12,7 @@ from helpers import get_distance_between_points, controls, on_key_up, on_key_dow
 Window.size = (1920, 1080)
 
 rects = []
-
+gravity = -0.25
 
 # Just using an image because I am lazy.
 class Rect(Image):
@@ -93,17 +93,18 @@ class Rect(Image):
             self.solve_with_rect(rect_to_solve)
 
     def update(self, dt):
+        # Apply gravity
+        self.y_velocity += gravity
+
         # We diminish the velocity so that we don't keep moving. We could change how much the velocity is diminished-
         # based on the surface the rect is on.
-        self.x_velocity *= 0.9
-        self.y_velocity *= 0.9
+        self.x_velocity *= 0.98
 
         # Now move the rect corresponding to its velocity, but we don't move the rect if it is static.
         if not self.static:
             self.x += self.x_velocity
             self.y += self.y_velocity
-            if controls.get('space'):
-                self.solve_collisions()
+            self.solve_collisions()
             # Just some rendering to highlight the overlapping.
             self.remove_extra_instructions()
             self.add_instructions()
@@ -160,15 +161,13 @@ class GameApp(App):
         for rect in rects:
             rect.update(dt)
 
+        if controls.get('space'):
+            self.player_rect.y_velocity += 10
+            controls.pop('space')
         if controls.get('a'):
             self.player_rect.x_velocity = -5
         if controls.get('d'):
             self.player_rect.x_velocity = 5
-        if controls.get('s'):
-            self.player_rect.y_velocity = -5
-        if controls.get('w'):
-            self.player_rect.y_velocity = 5
-
 
 if __name__ == '__main__':
     GameApp().run()
