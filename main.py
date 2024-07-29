@@ -53,6 +53,7 @@ class Rect(Image):
                 self.canvas.add(brightener_instruction)
 
     def solve_with_rect(self, rect):
+        self.collide_widget()
         intersection_size = get_intersection_of_rects(rect, self)[2:]
 
         # We solve the axis with the least overlap.
@@ -131,6 +132,24 @@ def get_intersection_of_rects(rect_one, rect_two):
     # intersection[0] = min(rect_one.right, rect_two.right) - max(rect_one.x, rect_two.x)
     # intersection[1] = min(rect_one.top, rect_two.top) - max(rect_one.y, rect_two.y)
     # return intersection
+
+
+def rect_collides_with_rect(rect, rect2):
+    # With this program, a rectangle's x and y correspond to the bottom-left of it.
+    if rect.right < rect2.x:
+        # Does not collide.
+        return False
+    if rect.x > rect2.right:
+        # Does not collide.
+        return False
+    if rect.top < rect2.y:
+        # Does not collide.
+        return False
+    if rect.y > rect2.top:
+        # Does not collide.
+        return False
+    # Does collide.
+    return True
 
 
 class GameApp(App):
