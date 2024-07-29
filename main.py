@@ -53,7 +53,6 @@ class Rect(Image):
                 self.canvas.add(brightener_instruction)
 
     def solve_with_rect(self, rect):
-        self.collide_widget()
         intersection_size = get_intersection_of_rects(rect, self)[2:]
 
         # We solve the axis with the least overlap.
